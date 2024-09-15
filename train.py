@@ -26,7 +26,7 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 def save_checkpoint(epoch, model, optimizer, args):
-    checkpoint_path = f"mnist_cnn_checkpoint_epoch_{epoch}.pth"
+    checkpoint_path = "/workspace/model_checkpoint.pth"
     torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
@@ -35,7 +35,9 @@ def save_checkpoint(epoch, model, optimizer, args):
     }, checkpoint_path)
     print(f"Checkpoint saved at {checkpoint_path}")
 
-def load_checkpoint(model, optimizer, checkpoint_path):
+
+def load_checkpoint(model, optimizer):
+    checkpoint_path = "/workspace/model_checkpoint.pth"
     if os.path.isfile(checkpoint_path):
         checkpoint = torch.load(checkpoint_path)
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -87,7 +89,7 @@ def main():
                         help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                         help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
+    parser.add_argument('--epochs', type=int, default=2, metavar='N',
                         help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                         help='learning rate (default: 0.01)')
@@ -97,10 +99,10 @@ def main():
                         help='random seed (default: 1)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--save-model', action='store_true', default=False,
+    parser.add_argument('--save-model', action='store_true', default=True,
                         help='For Saving the current Model')
-    parser.add_argument('--resume-from-checkpoint', type=str, default=None,
-                        help='Path to the checkpoint to resume training from')
+    parser.add_argument('--resume', action='store_true', default=False,
+                        help='Whether to resume training from the checkpoint')
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
     parser.add_argument('--dry-run', action='store_true', default=False,
@@ -128,8 +130,8 @@ def main():
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
     start_epoch = 1
-    if args.resume_from_checkpoint:
-        start_epoch = load_checkpoint(model, optimizer, args.resume_from_checkpoint)
+    if args.resume:
+        start_epoch = load_checkpoint(model, optimizer)
 
     for epoch in range(start_epoch, args.epochs + 1):
         train_epoch(epoch, args, model, device, train_loader, optimizer)
